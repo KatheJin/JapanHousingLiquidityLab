@@ -4,6 +4,8 @@
 
 ## 日本語
 
+Task 006: [歴史的購入機会の記述分析](docs/task006.md)。将来確率ではありません。
+
 Task 005: [時差を明示する価格競争力参考](docs/task005.md)。
 
 Task 004: [価格基準モデル・時間検証](docs/task004.md)。
@@ -49,6 +51,8 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+Task 006: [Historical opportunity descriptions](docs/task006.md), not future probabilities.
 
 Task 005: [Lag-aware price competitiveness reference](docs/task005.md).
 
