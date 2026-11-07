@@ -4,6 +4,8 @@
 
 ## 日本語
 
+Task 003: 2023Q1〜2026Q2の14四半期、55,652件を取得。[履歴分析](docs/task003.md)。
+
 Task 002: [取引価格CSVの探索分析](docs/task002.md)。2023Q1の実CSVを取得・検証済み。範囲は最新公開四半期まで。[更新状況](docs/task002-update.md)。
 
 開発初期の個人研究プロジェクトです。現時点では、実市場の予測サービスではありません。
@@ -43,6 +45,8 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+Task 003: 14 quarters, 2023Q1–2026Q2, with 55,652 transactions acquired. [Historical analysis](docs/task003.md).
 
 Task 002: [Transaction CSV EDA](docs/task002.md). Real 2023Q1 CSV acquired and validated. Scope extends to the latest published quarter. [Update](docs/task002-update.md).
 

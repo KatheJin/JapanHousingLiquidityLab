@@ -15,3 +15,6 @@ jhll = "japan_housing_liquidity_lab.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["japan_housing_liquidity_lab*"]
+
+[project.optional-dependencies]
+plots = ["matplotlib>=3.8,<4"]
