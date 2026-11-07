@@ -218,3 +218,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local research inputs, outputs, secrets, and IDE settings
+.idea/
+.env.*
+!.env.example
+/data/
+/reports/
+/models/
+*.pem
+*.key
