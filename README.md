@@ -4,6 +4,8 @@
 
 ## 日本語
 
+Task 005: [時差を明示する価格競争力参考](docs/task005.md)。
+
 Task 004: [価格基準モデル・時間検証](docs/task004.md)。
 
 Task 003: 2023Q1〜2026Q2の14四半期、55,652件を取得。[履歴分析](docs/task003.md)。
@@ -47,6 +49,8 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+Task 005: [Lag-aware price competitiveness reference](docs/task005.md).
 
 Task 004: [Price benchmark and temporal evaluation](docs/task004.md).
 
