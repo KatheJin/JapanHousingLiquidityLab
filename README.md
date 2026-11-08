@@ -4,6 +4,9 @@
 
 ## 日本語
 
+Task 011: [住まいの判断ノート](docs/task011.md)。Streamlitローカル原型・合成デモ。実分析は管理者の明示設定が必要です。
+
+
 Task 010: [掲載観測・複数媒体追跡](docs/task010.md)。許可されたローカル入力と合成例。非観測は成約日ではありません。
 
 Task 009: [地域・駅アクセスと住宅価格](docs/task009.md)。歴史予算比較CLI。鉄道通勤は未検証、現在の割安順位ではありません。
@@ -59,6 +62,9 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+Task 011: [Housing Decision Assistant](docs/task011.md). Local Streamlit prototype with synthetic demo; real analysis requires explicit operator setup.
+
 
 Task 010: [Listing observation and multi-source tracking](docs/task010.md). Authorized local input and synthetic examples; disappearance is not a sale date.
 
