@@ -4,6 +4,8 @@
 
 ## 日本語
 
+Task 007: [REINS市場活動・季節性・価格帯](docs/task007.md)。2023年1月～2026年9月、MLITとは独立した市場背景。
+
 Task 006: [歴史的購入機会の記述分析](docs/task006.md)。将来確率ではありません。
 
 Task 005: [時差を明示する価格競争力参考](docs/task005.md)。
@@ -26,7 +28,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m japan_housing_liquidity_lab demo
 ```
 
-すでに `.venv` がある場合、作成コマンドは不要です。追加パッケージのインストールや環境の有効化は不要です。
+すでに `.venv` がある場合、作成コマンドは不要です。合成データ入門には追加パッケージや環境の有効化は不要です。REINS解析には `pip install -e ".[reins]"` を使用します。
 PyCharm のプロジェクトインタープリターには `.venv\Scripts\python.exe` を指定してください。
 再実行時は `demo --output reports/run-002` のように新しい出力先を指定します。既存の結果は上書きしません。
 
@@ -34,7 +36,7 @@ PyCharm のプロジェクトインタープリターには `.venv\Scripts\pytho
 
 - 再現可能な合成データ、右打ち切りを扱う Kaplan–Meier 基準モデル、7日・30日の集団リスク出力。
 - ローカル CSV の文字コード（UTF-8 / CP932）、列名、欠損数、行数、不正な列数、SHA-256 の検査。
-- 標準ライブラリのみのテスト。価格に応じた個別予測や因果推論は未実装です。
+- 合成データ入門は標準ライブラリで実行できます。価格参考モデルはTask 004～006を参照。因果推論は未実装です。
 
 ```powershell
 .\.venv\Scripts\python.exe -m japan_housing_liquidity_lab inspect-mlit data/raw/your_mlit.csv
@@ -51,6 +53,8 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+Task 007: [REINS activity, seasonality and price bands](docs/task007.md), January 2023–September 2026, independent of MLIT records.
 
 Task 006: [Historical opportunity descriptions](docs/task006.md), not future probabilities.
 
@@ -74,7 +78,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m japan_housing_liquidity_lab demo
 ```
 
-Skip environment creation if `.venv` already exists. No activation or package installation is required.
+Skip environment creation if `.venv` already exists. The synthetic starter needs no activation or extra packages. REINS analysis requires `pip install -e ".[reins]"`.
 Select `.venv\Scripts\python.exe` as the project interpreter in PyCharm.
 For subsequent runs, use a fresh directory, such as `demo --output reports/run-002`; existing results are never overwritten.
 
@@ -82,7 +86,7 @@ For subsequent runs, use a fresh directory, such as `demo --output reports/run-0
 
 - Seeded synthetic data, a right-censored Kaplan–Meier baseline, and population risks at 7 and 30 days.
 - Local CSV inspection: UTF-8 / CP932, headers, missing counts, row counts, malformed widths, and SHA-256.
-- Standard-library tests. Individual price-based prediction and causal inference are not implemented.
+- The synthetic starter uses the standard library. Price-reference models are documented in Tasks 004–006; causal inference is not implemented.
 
 ```powershell
 .\.venv\Scripts\python.exe -m japan_housing_liquidity_lab inspect-mlit data/raw/your_mlit.csv
