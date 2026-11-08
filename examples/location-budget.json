@@ -1,0 +1,16 @@
+{
+  "reference_date": "2026-11-08",
+  "history_start": "2025Q1",
+  "history_end": "2026Q2",
+  "budget_min_jpy": 0,
+  "budget_max_jpy": 60000000,
+  "min_area_m2": 40,
+  "max_age": 40,
+  "max_walk_minutes": 15,
+  "layouts": [],
+  "structures": [],
+  "municipalities": [],
+  "destinations": ["渋谷", "新宿", "東京", "品川", "池袋"],
+  "max_commute_minutes": 45,
+  "transport_modes": ["public_transport"]
+}
