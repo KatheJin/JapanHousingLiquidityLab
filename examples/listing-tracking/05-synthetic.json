@@ -1,0 +1,25 @@
+{
+  "version": "task010-v1",
+  "batch_id": "A-4",
+  "source": "A",
+  "scope_id": "fixed",
+  "scope": {
+    "coverage_type": "tracked_listing_ids",
+    "definition": "SYNTHETIC fixed watch list",
+    "listing_ids": [
+      "a",
+      "b"
+    ]
+  },
+  "observed_at": "2026-11-04T12:00:00+09:00",
+  "completeness": "complete",
+  "check_evidence": "SYNTHETIC check: fixed IDs verified",
+  "data_kind": "synthetic",
+  "rights": {
+    "basis": "synthetic",
+    "evidence": "Invented fixture",
+    "local_retention_allowed": true,
+    "url_retention_allowed": false
+  },
+  "records": []
+}

@@ -1,0 +1,2 @@
+﻿listing_id,status,evidence,price_jpy,area_m2,municipality,town,station,walk_minutes,built_year,layout,structure,property_id,match_evidence
+a,present,SYNTHETIC observation,59000000,70,架空区,架空町,架空駅,10,2005,3LDK,RC,SYNTHETIC-HOME,SYNTHETIC exact dwelling crosswalk verified
