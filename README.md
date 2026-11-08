@@ -4,6 +4,8 @@
 
 ## 日本語
 
+Task 008: [歴史データ拡張・時間検証](docs/task008.md)。2018Q1～2026Q2、140,888件。探索的検証であり、旧モデルは置換しません。 [最終監査](docs/task008-final-review.md)。
+
 Task 007: [REINS市場活動・季節性・価格帯](docs/task007.md)。2023年1月～2026年9月、MLITとは独立した市場背景。
 
 Task 006: [歴史的購入機会の記述分析](docs/task006.md)。将来確率ではありません。
@@ -53,6 +55,8 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+Task 008: [Historical expansion and temporal validation](docs/task008.md). 140,888 retained records, 2018Q1–2026Q2; exploratory experiments, existing models preserved. [Final review](docs/task008-final-review.md).
 
 Task 007: [REINS activity, seasonality and price bands](docs/task007.md), January 2023–September 2026, independent of MLIT records.
 
