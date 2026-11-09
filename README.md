@@ -4,6 +4,7 @@ Housing Historical Comparison & Alternative Discovery — 過去の取引、現�
 
 ## 日本語
 
+[Phase 3 歴史成約分析](docs/phase3-history.md)：実データの件数・展開明細・原単価。正式調整はunavailable。ローカル実データが既定、合成Demoは開発者の明示設定のみ。
 
 ### 新版MVPとHedonic Pricing Model
 
@@ -93,6 +94,7 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 
 ## English
 
+[Phase 3 historical transactions](docs/phase3-history.md): real counts, expandable records and raw unit prices. Formal adjustments remain unavailable. Real data is the default; synthetic demo requires developer opt-in.
 
 ### New MVP and Hedonic Pricing Model
 

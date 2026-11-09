@@ -16,14 +16,17 @@ st.title('住まいの判断ノート')
 st.caption('東京都・中古マンション｜歴史的な取引参考と掲載観測の研究用プロトタイプ')
 st.warning('購入の推奨・将来の値上がり予測は行いません。2026Q2までのデータは現在の即時価格ではなく、不完全・改訂の可能性があります。')
 today=datetime.now(timezone(timedelta(hours=9))).date()
-real_enabled=os.environ.get('JHLL_ENABLE_REAL')=='1'
-mode=st.sidebar.radio('データ', ['合成デモ','ローカル実データ'] if real_enabled else ['合成デモ'])
+developer_demo=os.environ.get('JHLL_ENABLE_REAL')=='0' or os.environ.get('JHLL_ENABLE_DEMO')=='1'
+real_enabled=os.environ.get('JHLL_ENABLE_REAL')!='0'
+mode=st.sidebar.radio('データ', ['合成デモ','ローカル実データ'] if developer_demo else ['ローカル実データ'])
 synthetic=mode=='合成デモ'
+page=st.sidebar.radio('ページ',['住宅価格分析','過去の購入機会','地域と予算','掲載追跡','歴史成約分析'])
+if page=='歴史成約分析':
+    synthetic=False;mode='ローカル実データ'
 st.info('合成デモ｜全て架空のデータです。実際の住宅の判断には使えません。' if synthetic else 'ローカル実データ｜過去の成約記録を使用します。現在の在庫・即時価格ではありません。')
 if not synthetic:
     st.caption('出典：国土交通省「不動産情報ライブラリ」取引価格情報を加工した独自研究。公式の価格査定ではありません。 https://www.reinfolib.mlit.go.jp/')
-st.sidebar.info('合成デモ：全て架空。価格モデルは学習済みモデルではなく画面確認用の固定値です。' if synthetic else '実データ：管理者が用意した既存ファイルを読みます。原票は表示・配布しません。')
-page=st.sidebar.radio('ページ',['住宅価格分析','過去の購入機会','地域と予算','掲載追跡'])
+st.sidebar.info('合成デモ：全て架空。価格モデルは学習済みモデルではなく画面確認用の固定値です。' if synthetic else '実データ：歴史成約分析では公開取引の明細を表示・保存できます。掲載の私有記録は別管理です。')
 st.sidebar.caption('入力と履歴はこの接続のセッション内だけ。更新・切断で失う可能性があります。個人情報は入力しないでください。')
 if st.sidebar.button('このセッションの入力・結果を消去'):
     st.session_state.clear();st.rerun()
@@ -60,7 +63,10 @@ def home_form(age_mode):
     return city,town,station,walk,area,year,age,layout,structure,price,reference
 
 
-if page in ['住宅価格分析','過去の購入機会']:
+if page=='歴史成約分析':
+    from japan_housing_liquidity_lab.history_page import render
+    render()
+elif page in ['住宅価格分析','過去の購入機会']:
     historical=page=='過去の購入機会'
     st.header(page)
     st.info('比較範囲：既存Task 005/006の2023Q1～2026Q2。Task 008の拡張モデルへ自動置換しません。')

@@ -124,8 +124,9 @@ class PageTests(unittest.TestCase):
             self.assertTrue(any('ローカル実データ' in x.value for x in a.main.info))
     def app(self):
         from streamlit.testing.v1 import AppTest
-        with patch.dict(os.environ,{'JHLL_ENABLE_REAL':'0','JHLL_LOCAL_SAVE':'0'}):
-            a=AppTest.from_file(str(ROOT/'streamlit_app.py'),default_timeout=30).run()
+        config=patch.dict(os.environ,{'JHLL_ENABLE_REAL':'0','JHLL_LOCAL_SAVE':'0'})
+        config.start();self.addCleanup(config.stop)
+        a=AppTest.from_file(str(ROOT/'streamlit_app.py'),default_timeout=30).run()
         self.assertFalse(a.exception)
         return a
     def test_price_page_submit(self):
