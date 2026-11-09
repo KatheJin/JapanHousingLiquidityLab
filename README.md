@@ -1,8 +1,15 @@
 # JapanHousingLiquidityLab
 
-日本の住宅市場における価格動向・掲載期間・掲載終了リスクを分析し、データに基づく住宅購入の意思決定支援を目指す研究プロジェクト。 | A data-driven research project analyzing housing prices, listing duration, and delisting risk in Japan.
+Housing Historical Comparison & Alternative Discovery — 過去の取引、現在の類似掲載、価格水準の近い地域を比較する住宅研究プロジェクト。 | Research on historical transactions, comparable current listings and alternative areas at similar price levels.
 
 ## 日本語
+
+
+### 新版MVPとHedonic Pricing Model
+
+新版の中心は **Hedonic Pricing Model（住宅属性を考慮した価格モデル）**。歴史的な相対価格水準、現在の類似掲載のオンデマンド検索、価格水準の近い地域の発見を支援する。7日／30日消失予測と長期収集は独立研究として保持し、新版MVPの必須条件にはしない。
+
+今回は[Phase 1・2監査と実験](docs/hedonic-phase1-2.md)のみ。既存Ridge／HGBと実データを再利用し、属性・市場時間・建物老化を分けて診断する。時間調整は未検証のため利用不可を返し、購入判断や将来確率に変換しない。既存UIは維持し、オンデマンド検索・地域推薦・Phase 3画面は今後の作業。
 
 [Task 012公開前確認](docs/task012-release-review.md)：最終186テスト成功。稼働中collectorを保持し、公開対象と私有データを分離。
 
@@ -85,6 +92,13 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+
+### New MVP and Hedonic Pricing Model
+
+The core method is a **Hedonic Pricing Model**, comparing housing prices while accounting for observed attributes. The product direction is historical relative-price comparison, on-demand comparable listings and discovery of areas at similar price levels. Seven/thirty-day disappearance prediction and long-running collection remain separate research, outside required MVP scope.
+
+Only [Phase 1/2 audit and experiments](docs/hedonic-phase1-2.md) are implemented here. Existing Ridge/HGB and verified data are reused; attributes, market time and physical aging have separate diagnostics. Unvalidated time adjustment returns unavailable. Existing UI is retained; on-demand search, area recommendation and Phase 3 screens remain future work.
 
 [Task 012 release review](docs/task012-release-review.md): final 186-test suite passed; active collection preserved and private data excluded.
 
