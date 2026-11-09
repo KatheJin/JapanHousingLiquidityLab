@@ -16,17 +16,18 @@ def render():
     except (ValueError,OSError,KeyError):
         st.error('実データを読み込めません。管理者に確認してください。架空データには切り替えません。');return
     st.caption(f"出典：{metadata['source']} ｜ {metadata['records']:,}記録 ｜ 取得確認 {metadata['available_on']} ｜ 実収録 {metadata['coverage'][0]}～{metadata['coverage'][-1]}。公表日は不明。")
+    subject=st.session_state.get('housing_subject',{})
     modes={'同じ市区町村＋駅':'strict_station','同じ市区町村':'municipality','指定した市区町村＋駅を比較':'selected_locations'}
     with st.form('phase3_history'):
         a,b=st.columns(2)
         with a:
-            city=st.text_input('対象の市区町村');town=st.text_input('対象の町名（任意）');station=st.text_input('対象の最寄駅')
-            area=st.number_input('対象の専有面積（㎡）',min_value=0.,value=None)
-            year=st.number_input('対象の建築年',min_value=1800,max_value=2100,value=None)
-            walk=st.number_input('対象の駅徒歩分（任意）',min_value=0,value=None)
+            city=st.text_input('対象の市区町村',value=subject.get('市区町村名',''));town=st.text_input('対象の町名（任意）',value=subject.get('地区名',''));station=st.text_input('対象の最寄駅',value=subject.get('最寄駅：名称',''))
+            area=st.number_input('対象の専有面積（㎡）',min_value=0.,value=float(subject['面積（㎡）']) if subject.get('面積（㎡）') else None)
+            year=st.number_input('対象の建築年',min_value=1800,max_value=2100,value=int(subject['建築年'].removesuffix('年')) if subject.get('建築年') else None)
+            walk=st.number_input('対象の駅徒歩分（任意）',min_value=0,value=int(float(subject['最寄駅：距離（分）'])) if subject.get('最寄駅：距離（分）') else None)
         with b:
-            layout=st.text_input('対象の間取り（任意）');structure=st.text_input('対象の構造（任意）')
-            price=st.number_input('対象の掲載価格（万円）',min_value=0.,value=None)
+            layout=st.text_input('対象の間取り（任意）',value=subject.get('間取り',''));structure=st.text_input('対象の構造（任意）',value=subject.get('建物の構造',''))
+            price=st.number_input('対象の掲載価格（万円）',min_value=0.,value=float(subject['asking_price_jpy'])/10000 if subject.get('asking_price_jpy') else None)
             reference=st.date_input('比較の参考日')
             start=st.selectbox('歴史比較の開始',metadata['coverage'])
             calendar=[qs(i) for i in range(qi(metadata['coverage'][0]),qi(metadata.get('calendar_end',metadata['coverage'][-1]))+1)]
@@ -41,6 +42,7 @@ def render():
         st.session_state.pop('phase3_result',None)
         try:
             q=home_query(city,town,station,walk,area,year,None,layout,structure,price,reference)
+            st.session_state['housing_subject']=dict(q)
             q.update(history_start=start,history_end=end)
             if use_walk:q['walk_tolerance_minutes']=tolerance
             locations=[]

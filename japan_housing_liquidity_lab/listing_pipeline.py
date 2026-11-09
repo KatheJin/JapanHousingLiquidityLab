@@ -97,16 +97,27 @@ class Store:
         return dict(source=source,discovered_unique=n,successful_unique=unique,successful_snapshots=len(rows),failed_observations=self.db.execute('SELECT COUNT(*) FROM snapshots WHERE source=? AND success=0',(source,)).fetchone()[0],list_pages_scanned=self.db.execute('SELECT COUNT(*) FROM pages JOIN runs ON pages.run_id=runs.id WHERE runs.source=?',(source,)).fetchone()[0],error_counts=[dict(r) for r in self.db.execute('SELECT error,COUNT(*) n FROM snapshots WHERE source=? AND error IS NOT NULL GROUP BY error',(source,))],request_errors=[dict(r) for r in self.db.execute('SELECT url,status,error,observed_at FROM requests WHERE source=? AND error IS NOT NULL',(source,))],field_completeness=completeness,completeness_denominator=min(unique,1000),runs=[dict(r) for r in self.db.execute('SELECT * FROM runs WHERE source=? ORDER BY started_at',(source,))],database=str(self.path.resolve()))
 
 
+class CollectionPaused(Exception):
+    """Cooperative user pause, never an observation failure."""
+
+
 class PublicHTTP:
     def __init__(self,store,source,run,interval=10):
         self.store=store;self.source=source;self.run=run;self.interval=interval;self.clients={};self.robot=None
     def get(self,url,media='text/html',check=True):
+        def checkpoint():
+            if getattr(self,'cancel_check',lambda:False)():raise CollectionPaused()
+        checkpoint()
         u=urlsplit(url);origin=f'{u.scheme}://{u.netloc}'
         permitted={SOURCES[self.source]['origin'],f'{urlsplit(SOURCES[self.source]["terms"]).scheme}://{urlsplit(SOURCES[self.source]["terms"]).netloc}'}
         if origin not in permitted or u.scheme!='https' or u.username or u.fragment: raise StopCollection('Unapproved URL')
         if check and (self.robot is None or not self.robot.can_fetch(url,UA)): raise StopCollection('Robots_disallow')
         last=self.store.db.execute('SELECT last_request_at FROM controls WHERE source=?',(self.source,)).fetchone()
-        if last: time.sleep(max(0,self.interval-(time.time()-last[0])))
+        if last:
+            remaining=max(0,self.interval-(time.time()-last[0]))
+            while remaining>0:
+                checkpoint();time.sleep(min(.25,remaining));remaining=max(0,self.interval-(time.time()-last[0]))
+        checkpoint()
         with self.store.db: self.store.db.execute('INSERT OR REPLACE INTO controls VALUES(?,?)',(self.source,time.time()))
         if origin not in self.clients:
             self.clients[origin]=Client(origin,self.store.path.parent/('unused-'+self.source+'.json'),timeout=20,interval=self.interval,retries=0)
@@ -250,19 +261,27 @@ def suumo_detail(html,url):
     return row,extra
 
 
-def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=False,local_private_only=False,transport_factory=PublicHTTP,store_factory=Store):
+def scope_fingerprint(source,entry,isolated_scope=None):
+    return hashlib.sha256((source+entry+(':'+isolated_scope if isolated_scope else '')).encode()).hexdigest()
+
+
+def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=False,local_private_only=False,transport_factory=PublicHTTP,store_factory=Store,isolated_scope=None,discovery=None,should_pause=None):
     if not local_private_only: raise ValueError('Only local/private/noncommercial evaluation is enabled')
-    if not 1<=max_pages<=20 or not 1<=max_details<=100 or recheck_hours<0: raise ValueError('Invalid bounded run budget')
-    adapter=ADAPTERS[source];adapter.entry(entry);store=store_factory(db)
+    if isolated_scope is not None and not re.fullmatch(r'[a-z0-9-]{1,80}',isolated_scope):raise ValueError('Invalid isolated scope')
+    minimum=0 if isolated_scope else 1
+    if not minimum<=max_pages<=20 or not minimum<=max_details<=100 or recheck_hours<0: raise ValueError('Invalid bounded run budget')
+    adapter=discovery or ADAPTERS[source];adapter.entry(entry);store=store_factory(db)
     lock=None if getattr(store,'database_worker_lock',False) else Path(str(db)+'.collector.lock')
     if lock is not None:
         try: lock.touch(exist_ok=False)
         except FileExistsError: store.close();raise ValueError('Collector locked; inspect interrupted process') from None
     try:
-        if getattr(store,'database_worker_lock',False):
+        if getattr(store,'database_worker_lock',False) and isolated_scope is None:
             # Acquiring the sole writer lock proves no previous PG worker remains.
             with store.db: store.db.execute("UPDATE runs SET status='interrupted',updated_at=? WHERE status='running'",(now(),))
-        fingerprint=hashlib.sha256((source+entry).encode()).hexdigest()
+        fingerprint=scope_fingerprint(source,entry,isolated_scope)
+        if isolated_scope is not None:
+            with store.db:store.db.execute("UPDATE runs SET status='interrupted',updated_at=? WHERE scope=? AND status='running'",(now(),fingerprint))
         if not resume and store.db.execute("SELECT 1 FROM runs WHERE scope=? AND status IN ('paused','interrupted','blocked')",(fingerprint,)).fetchone():
             # A fresh scope traversal can supersede old pending work explicitly;
             # preserve old rows for audit rather than running both queues later.
@@ -275,12 +294,16 @@ def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=Fal
                 store.db.execute('INSERT INTO jobs(run_id,kind,url) VALUES(?,?,?)',(rid,'list',entry))
         else:
             with store.db:store.db.execute("UPDATE runs SET status='running',updated_at=? WHERE id=?",(now(),rid))
-        client=transport_factory(store,source,rid);pages=0;success=0;failures=[];error=None
+        client=transport_factory(store,source,rid);client.cancel_check=should_pause or (lambda:False)
+        pages=0;success=0;failures=[];error=None;user_paused=False
+        def checkpoint():
+            if should_pause and should_pause():raise CollectionPaused()
         try:
             latest=store.db.execute("SELECT status,error,observed_at FROM requests WHERE source=? AND (status IN (403,429) OR error='Access_challenge') ORDER BY id DESC LIMIT 1",(source,)).fetchone()
             if latest and (latest['status'] in {403,429} or latest['error']=='Access_challenge') and datetime.now(timezone.utc)-datetime.fromisoformat(latest['observed_at'])<timedelta(hours=24): raise StopCollection('Access_restriction_cooldown_24h')
-            client.review()
+            checkpoint();client.review()
             while pages<max_pages:
+                checkpoint()
                 job=store.db.execute("SELECT * FROM jobs WHERE run_id=? AND kind='list' AND state='pending' ORDER BY rowid LIMIT 1",(rid,)).fetchone()
                 if not job: break
                 html=client.get(job['url']);links,nxt,total=adapter.discover(html,job['url'],entry)
@@ -294,7 +317,7 @@ def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=Fal
                         store.db.execute('INSERT INTO discovered VALUES(?,?,?,?,?) ON CONFLICT(source,listing_id) DO UPDATE SET last_discovered_at=excluded.last_discovered_at,url=excluded.url',(source,lid,url,now(),now()))
                         last=store.db.execute('SELECT observed_at FROM snapshots WHERE source=? AND listing_id=? AND success=1 ORDER BY rowid DESC LIMIT 1',(source,lid)).fetchone()
                         due=not last or datetime.now(timezone.utc)-datetime.fromisoformat(last[0])>=timedelta(hours=recheck_hours)
-                        if due: store.db.execute('INSERT OR IGNORE INTO jobs(run_id,kind,url,listing_id) VALUES(?,?,?,?)',(rid,'detail',url,lid))
+                        if due and (not hasattr(adapter,'should_fetch') or adapter.should_fetch(lid)): store.db.execute('INSERT OR IGNORE INTO jobs(run_id,kind,url,listing_id) VALUES(?,?,?,?)',(rid,'detail',url,lid))
                     if nxt:
                         if store.db.execute("SELECT 1 FROM jobs WHERE run_id=? AND kind='list' AND url=?",(rid,nxt)).fetchone(): raise ValueError('Pagination loop')
                         store.db.execute('INSERT INTO jobs(run_id,kind,url) VALUES(?,?,?)',(rid,'list',nxt))
@@ -303,7 +326,8 @@ def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=Fal
                 queued=store.db.execute("SELECT COUNT(*) FROM jobs WHERE run_id=? AND state='pending'",(rid,)).fetchone()[0]
                 if queued>1000: raise StopCollection('Queue_capacity_1000')
             for _ in range(max_details):
-                job=store.db.execute("SELECT * FROM jobs WHERE run_id=? AND kind='detail' AND state='pending' ORDER BY rowid LIMIT 1",(rid,)).fetchone()
+                checkpoint()
+                job=adapter.next_detail(store,rid) if hasattr(adapter,'next_detail') else store.db.execute("SELECT * FROM jobs WHERE run_id=? AND kind='detail' AND state='pending' ORDER BY rowid LIMIT 1",(rid,)).fetchone()
                 if not job: break
                 try:
                     html=client.get(job['url'])
@@ -314,6 +338,7 @@ def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=Fal
                 except ValueError as exc:
                     store.record(rid,source,job['listing_id'],None,{},str(exc));failures.append(dict(listing_id=job['listing_id'],error=str(exc)))
                     if isinstance(exc,StopCollection): raise
+        except CollectionPaused:user_paused=True
         except ValueError as exc: error=str(exc)
         except BaseException:
             with store.db: store.db.execute("UPDATE runs SET status='interrupted',updated_at=? WHERE id=?",(now(),rid))
@@ -324,9 +349,9 @@ def run(db,source,entry,*,max_pages=3,max_details=20,recheck_hours=24,resume=Fal
         list_pending=store.db.execute("SELECT COUNT(*) FROM jobs WHERE run_id=? AND kind='list' AND state='pending'",(rid,)).fetchone()[0]
         if not list_pending and totals and (len(totals)!=1 or totals[0]!=discovered): error=error or 'Search_count_or_pagination_changed; start a fresh discovery run'
         errors_n=store.db.execute("SELECT COUNT(*) FROM jobs WHERE run_id=? AND state='error'",(rid,)).fetchone()[0]
-        state='blocked' if error else 'paused' if pending else 'completed_with_errors' if errors_n else 'completed'
+        state='blocked' if error else 'paused' if user_paused or pending else 'completed_with_errors' if errors_n else 'completed'
         with store.db: store.db.execute('UPDATE runs SET status=?,updated_at=?,error=? WHERE id=?',(state,now(),error,rid))
-        result=dict(run_id=rid,source=source,entry=entry,status=state,pages_scanned_this_invocation=pages,successful_this_invocation=success,failures=failures,error=error,pending_jobs=pending,summary=store.summary(source))
+        result=dict(run_id=rid,source=source,entry=entry,status=state,pages_scanned_this_invocation=pages,successful_this_invocation=success,failures=failures,error=error,pending_jobs=pending,user_paused=user_paused,summary=store.summary(source))
         result['discovered_this_run']=discovered
         result['detail_jobs_this_run']=store.db.execute("SELECT COUNT(*) FROM jobs WHERE run_id=? AND kind='detail'",(rid,)).fetchone()[0]
         return result

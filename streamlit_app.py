@@ -20,14 +20,18 @@ developer_demo=os.environ.get('JHLL_ENABLE_REAL')=='0' or os.environ.get('JHLL_E
 real_enabled=os.environ.get('JHLL_ENABLE_REAL')!='0'
 mode=st.sidebar.radio('データ', ['合成デモ','ローカル実データ'] if developer_demo else ['ローカル実データ'])
 synthetic=mode=='合成デモ'
-page=st.sidebar.radio('ページ',['住宅価格分析','過去の購入機会','地域と予算','掲載追跡','歴史成約分析'])
-if page=='歴史成約分析':
+page=st.sidebar.radio('ページ',['住宅価格分析','過去の購入機会','地域と予算','掲載追跡','歴史成約分析','現在の類似掲載'])
+if page in ['歴史成約分析','現在の類似掲載']:
     synthetic=False;mode='ローカル実データ'
-st.info('合成デモ｜全て架空のデータです。実際の住宅の判断には使えません。' if synthetic else 'ローカル実データ｜過去の成約記録を使用します。現在の在庫・即時価格ではありません。')
-if not synthetic:
-    st.caption('出典：国土交通省「不動産情報ライブラリ」取引価格情報を加工した独自研究。公式の価格査定ではありません。 https://www.reinfolib.mlit.go.jp/')
+if page=='現在の類似掲載':
+    st.info('実掲載観測｜SUUMOの公開ページで確認した売出価格です。成約価格ではなく、現在の全在庫を保証しません。')
+    st.caption('出典：SUUMO公開一覧・詳細。各記録の取得日時と原ページを確認してください。国土交通省の成約データとは別管理です。')
+else:
+    st.info('合成デモ｜全て架空のデータです。実際の住宅の判断には使えません。' if synthetic else 'ローカル実データ｜過去の成約記録を使用します。現在の在庫・即時価格ではありません。')
+    if not synthetic:
+        st.caption('出典：国土交通省「不動産情報ライブラリ」取引価格情報を加工した独自研究。公式の価格査定ではありません。 https://www.reinfolib.mlit.go.jp/')
 st.sidebar.info('合成デモ：全て架空。価格モデルは学習済みモデルではなく画面確認用の固定値です。' if synthetic else '実データ：歴史成約分析では公開取引の明細を表示・保存できます。掲載の私有記録は別管理です。')
-st.sidebar.caption('入力と履歴はこの接続のセッション内だけ。更新・切断で失う可能性があります。個人情報は入力しないでください。')
+st.sidebar.caption('フォーム入力はこの接続内。検索タスク・観測はローカルPostgreSQLに保持され、このボタンでは削除されません。個人情報は入力しないでください。' if page=='現在の類似掲載' else '入力と履歴はこの接続のセッション内だけ。更新・切断で失う可能性があります。個人情報は入力しないでください。')
 if st.sidebar.button('このセッションの入力・結果を消去'):
     st.session_state.clear();st.rerun()
 
@@ -63,7 +67,10 @@ def home_form(age_mode):
     return city,town,station,walk,area,year,age,layout,structure,price,reference
 
 
-if page=='歴史成約分析':
+if page=='現在の類似掲載':
+    from japan_housing_liquidity_lab.on_demand_page import render
+    render()
+elif page=='歴史成約分析':
     from japan_housing_liquidity_lab.history_page import render
     render()
 elif page in ['住宅価格分析','過去の購入機会']:

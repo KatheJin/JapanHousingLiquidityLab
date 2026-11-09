@@ -4,6 +4,8 @@ Housing Historical Comparison & Alternative Discovery — 過去の取引、現�
 
 ## 日本語
 
+[Phase 4限定SUUMO検索・Phase 5境界](docs/phase4-demand-and-phase5-contract.md)：共有住宅入力から既定10一覧・最大12詳細（設定上限20/30）を確認。許可された一覧カードで予備選別し、厳格一致・近似候補・旧観測を分離。[実検索検証](docs/phase4-search-validation.md)。Phase 4は審査待ち、地域推薦は設計のみ。
+
 [Phase 3 歴史成約分析](docs/phase3-history.md)：実データの件数・展開明細・原単価。正式調整はunavailable。ローカル実データが既定、合成Demoは開発者の明示設定のみ。
 
 ### 新版MVPとHedonic Pricing Model
@@ -93,6 +95,8 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 詳細: [研究計画](docs/research-plan.md) · [データ取扱い](docs/data-guide.md)
 
 ## English
+
+[Phase 4 bounded SUUMO search / Phase 5 contract](docs/phase4-demand-and-phase5-contract.md): shared property input, default 10 lists/12 details (caps 20/30), permitted list-card screening, separate strict/approximate/old observations. [Live search validation](docs/phase4-search-validation.md). Phase 4 awaits review; area recommendations remain a contract only.
 
 [Phase 3 historical transactions](docs/phase3-history.md): real counts, expandable records and raw unit prices. Formal adjustments remain unavailable. Real data is the default; synthetic demo requires developer opt-in.
 
