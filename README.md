@@ -4,7 +4,15 @@ Housing Historical Comparison & Alternative Discovery — 過去の取引、現�
 
 ## 日本語
 
-[Phase 4限定SUUMO検索・Phase 5境界](docs/phase4-demand-and-phase5-contract.md)：共有住宅入力から既定10一覧・最大12詳細（設定上限20/30）を確認。許可された一覧カードで予備選別し、厳格一致・近似候補・旧観測を分離。[実検索検証](docs/phase4-search-validation.md)。Phase 4は審査待ち、地域推薦は設計のみ。
+### 一度の住宅入力で三つの比較
+
+1. **歴史的な類似成約**：実取引の件数・明細・原価格を確認する。
+2. **同じ地域の現在掲載**：明示操作でSUUMOの限定検索を行い、厳格一致と近似候補を分ける。
+3. **価格水準の近い地域**：Hedonic Pricing Modelで同じ住宅属性を比較し、研究候補のモデル一致・不一致・標本不足を表示する。候補を選ぶと元の住宅情報を再入力せずに当地掲載を検索できる。
+
+**正式な地域価格順位・歴史調整価格は利用不可。** モデルの一致も市場価格の同等性を保証しない。実成約の分布とモデル診断を別表示し、初回分析ではネット収集しない。現在のMVPはローカル私的利用の試験版で、公開サービスではない。[最終MVP機能確認・残課題](docs/mvp-final-review.md)。
+
+[Phase 4限定SUUMO検索・Phase 5境界](docs/phase4-demand-and-phase5-contract.md)：共有住宅入力から既定10一覧・最大12詳細（設定上限20/30）を確認。許可された一覧カードで予備選別し、厳格一致・近似候補・旧観測を分離。[実検索検証](docs/phase4-search-validation.md)。Phase 4は最終確認・Push済み（`e984566`）。[最終確認](docs/phase4-final-review.md)。
 
 [Phase 3 歴史成約分析](docs/phase3-history.md)：実データの件数・展開明細・原単価。正式調整はunavailable。ローカル実データが既定、合成Demoは開発者の明示設定のみ。
 
@@ -12,7 +20,9 @@ Housing Historical Comparison & Alternative Discovery — 過去の取引、現�
 
 新版の中心は **Hedonic Pricing Model（住宅属性を考慮した価格モデル）**。歴史的な相対価格水準、現在の類似掲載のオンデマンド検索、価格水準の近い地域の発見を支援する。7日／30日消失予測と長期収集は独立研究として保持し、新版MVPの必須条件にはしない。
 
-今回は[Phase 1・2監査と実験](docs/hedonic-phase1-2.md)のみ。既存Ridge／HGBと実データを再利用し、属性・市場時間・建物老化を分けて診断する。時間調整は未検証のため利用不可を返し、購入判断や将来確率に変換しない。既存UIは維持し、オンデマンド検索・地域推薦・Phase 3画面は今後の作業。
+[Phase 1・2監査と実験](docs/hedonic-phase1-2.md)で既存Ridge／HGBと実データを再利用し、属性・市場時間・建物老化を分けて診断する。正式な歴史時間調整は利用不可を維持。
+
+[Phase 5・統合住宅比較](docs/phase5-area-comparison.md)をローカル実装：一度の住宅入力から歴史成約明細、同地域の限定SUUMO検索、統一属性での研究用地域候補へ進む。候補地域を選んで検索ボタンを押すまでネット取得しない。地区間価格差・順位は未検証で、正式な推薦や現在の査定は提供しない。本版をローカル研究型MVPの安定チェックポイントとする。旧ページ・研究結果は保持する。
 
 [Task 012公開前確認](docs/task012-release-review.md)：最終186テスト成功。稼働中collectorを保持し、公開対象と私有データを分離。
 
@@ -96,7 +106,15 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 
 ## English
 
-[Phase 4 bounded SUUMO search / Phase 5 contract](docs/phase4-demand-and-phase5-contract.md): shared property input, default 10 lists/12 details (caps 20/30), permitted list-card screening, separate strict/approximate/old observations. [Live search validation](docs/phase4-search-validation.md). Phase 4 awaits review; area recommendations remain a contract only.
+### Three comparisons from one property input
+
+1. **Similar historical transactions**: inspect real counts, records and original prices.
+2. **Current listings in the same area**: explicitly start bounded SUUMO search, keeping strict and approximate results separate.
+3. **Areas at similar price levels**: use the Hedonic Pricing Model with identical property attributes; distinguish descriptive model agreement, disagreement and sparse samples. Search a chosen area's listings without re-entering the property.
+
+**Formal regional rankings and historical adjusted prices remain unavailable.** Agreement does not establish equivalent market prices. Raw transaction distributions and model diagnostics are separate; initial analysis does not crawl the web. This is a local private-use MVP, not a deployed public service. [Final MVP acceptance and remaining work](docs/mvp-final-review.md).
+
+[Phase 4 bounded SUUMO search / Phase 5 contract](docs/phase4-demand-and-phase5-contract.md): shared property input, default 10 lists/12 details (caps 20/30), permitted list-card screening, separate strict/approximate/old observations. [Live search validation](docs/phase4-search-validation.md). Phase 4 passed final review and was pushed (`e984566`). [Final review](docs/phase4-final-review.md).
 
 [Phase 3 historical transactions](docs/phase3-history.md): real counts, expandable records and raw unit prices. Formal adjustments remain unavailable. Real data is the default; synthetic demo requires developer opt-in.
 
@@ -104,7 +122,9 @@ Docker は初期段階では不要です。PostgreSQL、FastAPI、定期同期�
 
 The core method is a **Hedonic Pricing Model**, comparing housing prices while accounting for observed attributes. The product direction is historical relative-price comparison, on-demand comparable listings and discovery of areas at similar price levels. Seven/thirty-day disappearance prediction and long-running collection remain separate research, outside required MVP scope.
 
-Only [Phase 1/2 audit and experiments](docs/hedonic-phase1-2.md) are implemented here. Existing Ridge/HGB and verified data are reused; attributes, market time and physical aging have separate diagnostics. Unvalidated time adjustment returns unavailable. Existing UI is retained; on-demand search, area recommendation and Phase 3 screens remain future work.
+[Phase 1/2 audit and experiments](docs/hedonic-phase1-2.md) reuse existing Ridge/HGB and verified data, separating attributes, market time and physical aging. Formal historical time adjustment remains unavailable.
+
+[Phase 5 unified housing comparison](docs/phase5-area-comparison.md) is implemented locally: one property input connects historical records, bounded same-area SUUMO search and standardized research-only area candidates. Network collection starts only after an explicit search click, including a selected candidate. Cross-market contrasts and rankings remain unvalidated; no formal recommendation or current appraisal is supplied. This version is the stable checkpoint for the local research MVP. Existing pages and studies are retained.
 
 [Task 012 release review](docs/task012-release-review.md): final 186-test suite passed; active collection preserved and private data excluded.
 

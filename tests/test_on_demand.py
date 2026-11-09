@@ -63,6 +63,16 @@ class DemandPGTests(unittest.TestCase):
         self.entry_patch=patch.object(d,'_entry',return_value=ENTRY);self.entry_patch.start();self.addCleanup(self.entry_patch.stop)
     def run_task(self,**kw):
         task=d.create(Q,**kw);return task,d.execute(task,transport=Fake)
+    def test_destination_preserves_property_and_clears_target_town(self):
+        subject=Q|{'地区名':'元の町','walk_tolerance_minutes':5}
+        task=d.create(subject,destination={'municipality':'世田谷区','station':'三軒茶屋'})
+        payload=d._read(task)['payload'];q=payload['query']
+        self.assertEqual(q['市区町村名'],'世田谷区');self.assertEqual(q['最寄駅：名称'],'三軒茶屋')
+        self.assertEqual(q['地区名'],'');self.assertEqual(payload['original_query'],subject)
+        for key in ['面積（㎡）','建築年','間取り','建物の構造','最寄駅：距離（分）','walk_tolerance_minutes','asking_price_jpy','reference_date']:
+            self.assertEqual(q[key],subject[key])
+        self.assertEqual(subject['地区名'],'元の町')
+
     def test_task_dedup_snapshots_and_repeat_no_network(self):
         task,r=self.run_task()
         self.assertEqual(r['status'],'completed');self.assertEqual(r['result']['matched_n'],1)

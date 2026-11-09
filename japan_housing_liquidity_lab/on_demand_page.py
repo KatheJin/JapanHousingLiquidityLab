@@ -48,6 +48,20 @@ def render():
     render_task(task)
 
 
+def failure_message(error):
+    """Keep technical evidence available separately from a buyer-facing explanation."""
+    value=str(error).lower()
+    if any(x in value for x in ['403','429','access_restriction','access_challenge','robots']):
+        return '取得先のアクセス制限により確認を停止しました。制限を回避せず、再開可能になるまで待つ必要があります。'
+    if any(x in value for x in ['301','302','redirect']):
+        return '掲載ページの移動が検出され、現在の掲載内容を確認できませんでした。成約・掲載終了を意味するものではありません。'
+    if any(x in value for x in ['timeout','connection','500','503']):
+        return '通信や取得先の応答に問題があり、確認を完了できませんでした。'
+    if any(x in value for x in ['parse','pagination','count_or','structure']):
+        return '一覧や掲載情報の形式・件数が変わり、検索範囲を十分に確認できませんでした。'
+    return '今回の取得を完了できませんでした。確認済みの結果と未確認の範囲を分けて表示します。'
+
+
 def render_task(task, key_prefix=''):
     """Display an existing task without requiring another property form."""
     def widget_key(name):return key_prefix+name if key_prefix else None
@@ -57,39 +71,49 @@ def render_task(task, key_prefix=''):
         st.write('状態：',labels.get(progress['status'],progress['status']))
         if progress.get('query'):
             subject=progress['query'];st.caption(f"この結果の条件：{subject['市区町村名']}・{subject.get('最寄駅：名称','')} ／ {subject['面積（㎡）']}㎡ ／ {subject['建築年']} ／ {subject.get('間取り','')}")
-        st.json(progress['progress'],expanded=False)
         if progress['status'] in ['queued','running','waiting_central_worker','pause_requested']:
             st.info('状態と結果を更新すると、確認済み部分結果が表示されます。画面を閉じても実行中タスクは止まりません。一時停止は通信間の安全な位置で反映され、実行中の応答は最大タイムアウトまで待ちます。')
             if progress['status']!='pause_requested' and st.button('検索を一時停止／待機を解除',key=widget_key('pause')):demand.pause(task);st.rerun()
         if st.button('状態と結果を更新',key=widget_key('refresh')):st.rerun()
         if progress['status'] in ['waiting_central_worker','interrupted','paused','pause_requested','failed'] and st.button('同じタスクを再開',key=widget_key('retry')):demand.retry(task);st.rerun()
-        if progress.get('error'):st.warning('取得できませんでした：'+progress['error'])
+        if progress.get('error'):st.warning(failure_message(progress['error']))
         result=progress.get('result')
         if result:
             if result.get('live_partial'):st.info('実行中の部分結果です。まだ確認していない候補があります。')
-            if result.get('run',{}).get('error'):st.warning('検索を停止した理由：'+result['run']['error']+'。以下は停止前に確認できた部分結果です。未確認を在庫なしとは扱いません。')
+            if result.get('run',{}).get('error'):st.warning(failure_message(result['run']['error'])+' 以下は確認できた部分結果です。未確認を在庫なしとは扱いません。')
             a,b=st.columns(2)
             a.metric('今回の厳格一致（掲載ID）',result['matched_n'])
             b.metric('今回の近似候補（掲載ID・厳格と重複なし）',result.get('approximate_n',0))
             st.caption(f"一覧 {result.get('pages_scanned','?')} ページ ／ 発見 {result['discovered_ids']} ID ／ 属性の予備候補 {result.get('candidate_n','?')} ／ 詳細取得 {result.get('detail_attempts','?')}（成功 {result.get('successful_details','?')}） ／ HTTP {result.get('http_requests','?')}回")
-            st.caption(f"取得開始 {result.get('started_at','不明')} ／ 終了 {result['checked_at']}（UTC） ／ 経過 {result.get('elapsed_seconds',0):.1f} 秒")
+            st.caption(f"取得開始 {result.get('started_at','不明')} ／ 結果確認時点 {result['checked_at']}（UTC） ／ 経過 {result.get('elapsed_seconds',0):.1f} 秒")
             st.warning('0件でも在庫0を意味しません。許可された行政区一覧をページ上限まで調べた部分検索です。サイトの表示順・未確認ページ・未取得詳細による偏りがあります。複数仲介会社の同じ住宅は別の掲載IDとなる場合があります。')
-            st.info('公式絞り込みフォームの送信先は robots.txt により取得不可です。回避せず、公開一覧の面積・築年月・間取りを読み、関連する詳細を優先取得します。')
             totals=result.get('advertised_totals',[])
             st.write('サイト表示件数（取得件数ではありません）：',totals or '未確認','／ 一覧末尾まで確認：','はい' if result.get('list_traversal_complete') else 'いいえ')
             st.write('残る一覧ページ入口：',result.get('pending_pages','?'),'／ 残る候補詳細：',result.get('pending_details','?'))
             counts=result.get('observation_counts',{})
-            st.caption(f"今回初発見・詳細確認 {counts.get('newly_discovered',0)} ／ 再確認 {counts.get('reconfirmed',0)} ／ 既発見IDの初詳細 {counts.get('previously_discovered_first_detail',0)} ／ 旧DB観測 {counts.get('old_database',0)} ／ 詳細失敗 {counts.get('access_or_parse_failed',0)}")
-            if result['matched_n']==0:st.info('厳格一致は今回確認できませんでした。下の近似候補の「条件との差」を確認してください。未確認の範囲に一致住宅がないとは判断できません。')
+            st.caption(f"今回初発見・詳細確認 {counts.get('newly_discovered',0)} ／ 再確認 {counts.get('reconfirmed',0)} ／ 既発見IDの初詳細 {counts.get('previously_discovered_first_detail',0)} ／ 発見した全ID中の過去観測あり {counts.get('old_database',0)} ／ 詳細失敗 {counts.get('access_or_parse_failed',0)}")
+            old_matches=len(result.get('old_database_records',[]))
+            st.caption(f'条件に合う過去の観測：{old_matches}掲載ID。今回の詳細確認・一致数には含めません。価格と掲載継続は未確認です。')
+            if result['matched_n']==0:
+                if result.get('approximate_n',0):
+                    hint='下の近似候補の「条件との差」を確認してください。'
+                elif old_matches:
+                    hint='条件に合う過去の観測があります。「旧データベースの観測」を開いて確認できますが、今回の新しい確認結果ではありません。'
+                else:
+                    hint='今回確認できた近似候補もありません。'
+                st.info('厳格一致は今回確認できませんでした。'+hint+'未確認の範囲に一致住宅がないとは判断できません。')
             show_records('厳格一致',result['records'])
             show_records('条件を広げた近似候補',result.get('approximate_records',[]))
             with st.expander('旧データベースの観測（今回の一致数には含めません）'):
                 st.warning('今回詳細を再確認していません。価格・掲載継続は未確認です。今回アクセス失敗した場合も過去の観測を表示します。')
                 show_records('旧観測',result.get('old_database_records',[]))
-            with st.expander('検索範囲・失敗・取得証拠'):
-                st.json({k:result.get(k) for k in ['page_evidence','failed_details','http_statuses','server_filters','criteria']})
             st.download_button('実掲載検索結果JSON',json.dumps(result,ensure_ascii=False,allow_nan=False),file_name='current-listings.json',mime='application/json',key=widget_key('download'))
-    except Exception:st.error('タスク状態を取得できません。接続を確認して再試行してください。')
+        with st.expander('高度な詳細：検索範囲・進捗・失敗の根拠'):
+            st.json({'progress':progress.get('progress',{}),'task_error':progress.get('error'),'run_error':(result or {}).get('run',{}).get('error')})
+            if result:
+                st.info('公式絞り込みフォームの送信先は robots.txt により取得不可です。回避せず、公開一覧の面積・築年月・間取りを読み、関連する詳細を優先取得します。')
+                st.json({k:result.get(k) for k in ['page_evidence','failed_details','http_statuses','server_filters','criteria']})
+    except Exception:st.error('検索状況を読み込めません。データベース接続を確認してから、もう一度お試しください。掲載が0件になったという意味ではありません。')
 
 
 OBSERVATIONS={'newly_discovered':'今回新発見','reconfirmed':'今回再確認','previously_discovered_first_detail':'既発見・今回初詳細','old_database':'旧DB観測'}
@@ -106,6 +130,8 @@ def show_records(title,records):
     for r in records:
         with st.expander(f"掲載 {r.get('listing_id')} · {r['price_jpy']/10000:,.0f}万円 · {r['area_m2']}㎡ · {r.get('station','駅不明')}"):
             st.write(f"{r.get('municipality','')} {r.get('town','')} ／ {r.get('built_year','不明')}年築 ／ {r.get('layout','')} ／ {r.get('structure','構造不明')}")
+            st.write(f"掲載単価：{r['unit_price_jpy_m2']/10000:,.2f}万円/㎡ ／ 築年数：{r['age']}年（年差）" if r.get('age') is not None else f"掲載単価：{r['unit_price_jpy_m2']/10000:,.2f}万円/㎡ ／ 築年数：不明")
+            st.caption('築年数は現在の年と建築年の差です。建築月や観測時点の築年数とは異なる場合があります。')
             st.write('徒歩分：',r.get('walk_minutes','不明'),'（鉄道等を含む通勤時間ではありません）')
             st.write('条件との差：','、'.join(r.get('relaxed_conditions',[])) or '指定した厳格条件内')
             st.caption(f"{OBSERVATIONS.get(r.get('observation_kind'),'観測種別不明')} ／ {r.get('observed_at')} ／ {r.get('freshness_seconds',0)/3600:.1f}時間前")

@@ -168,6 +168,7 @@ class PageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder,patch.dict(os.environ,{'JHLL_ENABLE_REAL':'1','JHLL_DATA_ROOT':folder}):
             a=AppTest.from_file(str(ROOT/'streamlit_app.py'),default_timeout=30).run()
             a.sidebar.radio[0].set_value('ローカル実データ').run()
+            a.sidebar.radio[1].set_value('住宅価格分析').run()
             for label,value in [('市区町村','区'),('最寄駅','駅')]: next(x for x in a.text_input if x.label==label).set_value(value)
             for label,value in [('専有面積（㎡）',70.),('掲載総額（万円）',6000.),('建築年（西暦）',2005)]: next(x for x in a.number_input if x.label==label).set_value(value)
             next(x for x in a.button if x.label=='分析する').click().run();self.assertFalse(a.exception);self.assertTrue(a.error)
@@ -179,6 +180,7 @@ class PageTests(unittest.TestCase):
         with patch.dict(os.environ,{'JHLL_ENABLE_REAL':'1','JHLL_DATA_ROOT':str(ROOT),'JHLL_LOCAL_SAVE':'0'}):
             a=AppTest.from_file(str(ROOT/'streamlit_app.py'),default_timeout=60).run()
             a.sidebar.radio[0].set_value('ローカル実データ').run()
+            a.sidebar.radio[1].set_value('住宅価格分析').run()
             for label,value in [('市区町村','世田谷区'),('最寄駅','三軒茶屋'),('間取り（不明は空欄）','２ＬＤＫ'),('構造（不明は空欄）','ＲＣ')]:
                 next(x for x in a.text_input if x.label==label).set_value(value)
             for label,value in [('専有面積（㎡）',70.),('掲載総額（万円）',6000.),('建築年（西暦）',2005),('駅までの徒歩分（不明は空欄）',10)]:

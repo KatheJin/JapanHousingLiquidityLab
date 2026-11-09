@@ -169,7 +169,7 @@ def create(query,*,max_pages=10,max_details=12,strict_station=True,destination=N
     if not 1<=max_pages<=20 or not 1<=max_details<=30:raise ValueError('Budget exceeds local search limits')
     q=dict(query)
     if destination:
-        q['市区町村名']=destination['municipality'];q['最寄駅：名称']=destination.get('station','');strict_station=bool(destination.get('station'))
+        q['市区町村名']=destination['municipality'];q['最寄駅：名称']=destination.get('station','');q['地区名']='';strict_station=bool(destination.get('station'))
     # Reuse shared input validation; do not use asking price as a listing filter.
     from .web_adapter import home_query
     from datetime import date
