@@ -45,7 +45,7 @@ def validate(batch):
     if b.get('completeness') not in {'complete','partial','failed'}: raise ValueError('Invalid completeness')
     rights=b.get('rights',{})
     if not isinstance(rights,dict) or set(rights)-{'basis','evidence','local_retention_allowed','url_retention_allowed'}: raise ValueError('Invalid rights object or unknown fields')
-    if rights.get('basis') not in {'synthetic','manual_owned','provider_permission','open_license'} or rights.get('local_retention_allowed') is not True:
+    if rights.get('basis') not in {'synthetic','manual_owned','provider_permission','open_license','public_terms_review'} or rights.get('local_retention_allowed') is not True:
         raise ValueError('Documented local retention rights required')
     text(rights.get('evidence'),'rights evidence')
     if not isinstance(rights.get('url_retention_allowed'),bool): raise ValueError('Explicit URL retention permission required')
