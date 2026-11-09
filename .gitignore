@@ -228,3 +228,14 @@ __marimo__/
 /models/
 *.pem
 *.key
+.env.mlit-local
+
+# Database exports outside the usual ignored data directory
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.dump
+*.backup
